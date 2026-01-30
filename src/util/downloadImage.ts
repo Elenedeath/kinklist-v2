@@ -1,4 +1,4 @@
-export const downloadImage = (canvas: HTMLCanvasElement, filename: string = 'kinklist.png'): void => {
+export const downloadImage = (canvas: HTMLCanvasElement, filename = 'kinklist.png'): void => {
     const url = canvas.toDataURL();
     const linkEl = document.createElement('a');
     linkEl.setAttribute('href', url);
