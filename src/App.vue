@@ -214,14 +214,16 @@ export default class App extends Vue {
 
   public downloadImage(): void {
     const canvas = generateKinklistImage(this.categories, this.ratings, this.username, this.encodeData, this.language);
-    downloadImage(canvas);
+    const filenameWithLang = `kinklist v2 ${this.language.toUpperCase()}.png`;
+    downloadImage(canvas, filenameWithLang);
   }
 
   public async exportImage(): Promise<void> {
     try {
       this.uploading = true;
       const canvas = generateKinklistImage(this.categories, this.ratings, this.username, this.encodeData, this.language);
-      const id = await uploadImageToImgbb(canvas, this.imgbbKey, this.imageName);
+      const imageNameWithLang = `${this.imageName} ${this.language.toUpperCase()}`;
+      const id = await uploadImageToImgbb(canvas, this.imgbbKey, imageNameWithLang);
       const hasAnyComment = this.categories.some((c) => c.kinks.some((k) => k.comment));
       showDialog(UploadResultDialog, { uploadId: id, hasEncodedData: this.encodeData && hasAnyComment, language: this.language });
     } catch (ex) {
