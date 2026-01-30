@@ -97,7 +97,7 @@ import { downloadImage } from "./util/downloadImage";
   data() {
     let initialLanguage: 'en' | 'fr' = 'en';
     let initialImgbbKey = '';
-    let initialImageName = 'kinklist';
+    let initialImageName = 'kinklist v2';
     try {
       const saved = localStorage.getItem('kinklist-language');
       if (saved === 'fr') {
@@ -134,7 +134,7 @@ export default class App extends Vue {
   numColumns = 4;
   language: 'en' | 'fr' = 'en';
   imgbbKey = '';
-  imageName = 'kinklist';
+  imageName = 'kinklist v2';
 
   @Watch('language')
   onLanguageChange(): void {
