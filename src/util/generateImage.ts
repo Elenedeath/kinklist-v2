@@ -18,19 +18,22 @@ const config = {
 
 const stripIds = (data: InKinkCategory[], language: 'en' | 'fr' = 'en'): ExKinkCategory[] => {
     return data.map((inCat): ExKinkCategory => ({
-        name: language === 'fr' && inCat.name_fr ? inCat.name_fr : inCat.name,
+        name: inCat.name,
+        name_fr: inCat.name_fr,
         subcategories: inCat.subcategories.slice(),
         kinks: inCat.kinks.map((inKink): ExKink => ({
-            name: language === 'fr' && inKink.name_fr ? inKink.name_fr : inKink.name,
+            name: inKink.name,
+            name_fr: inKink.name_fr,
             ratings: { ...inKink.ratings },
-            comment: language === 'fr' && inKink.comment_fr ? inKink.comment_fr : inKink.comment,
+            comment: inKink.comment,
+            comment_fr: inKink.comment_fr,
         })),
     }));
 };
 
 export const generateKinklistImage = (inCategories: InKinkCategory[], ratings: Rating[], username: string, encodeData: boolean, language: 'en' | 'fr' = 'en'): HTMLCanvasElement => {
     const exCategories = stripIds(inCategories, language);
-    const dataPixels = getDataPixels(username, exCategories, ratings);
+    const dataPixels = getDataPixels(username, exCategories, ratings, language);
     const { columns, tallestColumnHeight } = divideCategoryColumns(exCategories);
     const { canvasWidth, canvasHeight } = getCanvasDimensions(tallestColumnHeight, dataPixels.length);
     const { canvas, context } = createCanvas(canvasWidth, canvasHeight);
@@ -210,8 +213,8 @@ const drawLegend = (context: CanvasRenderingContext2D, ratings: Rating[], canvas
 };
 
 type DataPixel = { r: number, g: number, b: number };
-const getDataPixels = (username: string, categories: ExKinkCategory[], ratings: Rating[]): DataPixel[] => {
-    const data = JSON.stringify({ username, categories, ratings });
+const getDataPixels = (username: string, categories: ExKinkCategory[], ratings: Rating[], language: 'en' | 'fr' = 'en'): DataPixel[] => {
+    const data = JSON.stringify({ username, categories, ratings, language });
     const bytes = [...data].map((c) => c.charCodeAt(0));
     const pixels = bytes.map((n) => {
         return {

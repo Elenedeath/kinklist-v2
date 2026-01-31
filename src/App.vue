@@ -1,7 +1,8 @@
 <template>
-  <transition name="fade">
-    <Importing v-if="importing" :language="language" />
-    <div v-else class="app">
+  <div>
+    <transition name="fade">
+      <Importing v-if="importing" :language="language" />
+      <div v-else class="app">
       <header>
         <h1>Kinklist</h1>
         <input type="text" v-model="username" :placeholder="language === 'fr' ? 'Entrez un nom d\'utilisateur' : 'Enter username'" />
@@ -13,6 +14,9 @@
         <Legend :ratings="ratings" :language="language" @updateRatings="updateRatings($event)" />
         <ExportButton :loading="uploading" :language="language" @click="exportImage()" />
         <DownloadButton :language="language" @click="downloadImage()" />
+        <button class="import-button" @click="showImgBBImport = true" :title="language === 'fr' ? 'Importer depuis ImgBB' : 'Import from ImgBB'">
+          📥 {{ language === 'fr' ? 'Importer' : 'Import' }}
+        </button>
         <div class="dropdown-container">
           <button class="dropdown-toggle hide-text" @click="toggleOptions(true)">Options</button>
           <transition name="fade">
@@ -59,7 +63,14 @@
         <span class="sr-only tooltip tooltip-left">{{ language === 'fr' ? 'Ajouter une catégorie' : 'Add category' }}</span>
       </button>
     </div>
-  </transition>
+    </transition>
+    <ImgBBImportDialog 
+      v-if="showImgBBImport"
+      :language="language"
+      @close="showImgBBImport = false"
+      @imported="handleImgBBImport($event)"
+    />
+  </div>
 </template>
 
 <script lang="ts">
@@ -79,6 +90,7 @@ import PromptDialog from "./components/Dialogs/PromptDialog.vue";
 import ErrorDialog from "./components/Dialogs/ErrorDialog.vue";
 import AboutDialog from "./components/Dialogs/AboutDialog.vue";
 import EditCategoryDialog from "./components/Dialogs/EditCategoryDialog.vue";
+import ImgBBImportDialog from "./components/Dialogs/ImgBBImportDialog.vue";
 import ExportButton from "./components/ExportButton.vue";
 import DownloadButton from "./components/DownloadButton.vue";
 import Importing from "./components/Importing.vue";
@@ -93,6 +105,7 @@ import { downloadImage } from "./util/downloadImage";
     DownloadButton,
     Importing,
     Legend,
+    ImgBBImportDialog,
   },
   data() {
     let initialLanguage: 'en' | 'fr' = 'en';
@@ -100,7 +113,9 @@ import { downloadImage } from "./util/downloadImage";
     let initialImageName = 'kinklist v2';
     try {
       const saved = localStorage.getItem('kinklist-language');
-      if (saved === 'fr') {
+      if (saved === 'en') {
+        initialLanguage = 'en';
+      } else if (saved === 'fr') {
         initialLanguage = 'fr';
       }
       const savedKey = localStorage.getItem('kinklist-imgbb-key');
@@ -129,6 +144,7 @@ export default class App extends Vue {
   uploading = false;
   importing = false;
   showOptions = false;
+  showImgBBImport = false;
   darkMode = false;
   encodeData = true;
   numColumns = 4;
@@ -196,11 +212,11 @@ export default class App extends Vue {
   }
 
   public mounted(): void {
-    // Ensure language is restored after all rendering
+    // Ensure language is restored from localStorage after all rendering
     try {
       const savedLanguage = localStorage.getItem('kinklist-language');
-      if (savedLanguage === 'fr' && this.language !== 'fr') {
-        (this as any).language = 'fr';
+      if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'fr')) {
+        this.language = savedLanguage as 'en' | 'fr';
       }
     } catch (e) {
       // localStorage not available
@@ -308,6 +324,22 @@ export default class App extends Vue {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
+    }
+  }
+
+  public handleImgBBImport(data: { username: string; categories: InKinkCategory[]; ratings: Rating[]; language?: 'en' | 'fr' }): void {
+    try {
+      this.showImgBBImport = false;
+      this.username = data.username;
+      this.categories = data.categories;
+      this.ratings = data.ratings;
+      // Keep the current language setting, don't change it
+    } catch (error) {
+      showDialog(ErrorDialog, { 
+        message: error instanceof Error ? error.message : "Failed to import from ImgBB", 
+        language: this.language 
+      });
+      console.error("Error importing from ImgBB:", error);
     }
   }
 
@@ -602,6 +634,27 @@ h1 {
       border-radius: 0 4px 4px 0;
       border-left: none;
     }
+  }
+}
+
+.import-button {
+  background-color: #246;
+  color: white;
+  border: 1px solid #1a3a52;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 500;
+  transition: background-color 0.2s ease-in-out;
+  flex: 0 0 auto;
+
+  &:hover {
+    background-color: #369;
+  }
+
+  &:active {
+    background-color: #135;
   }
 }
 
