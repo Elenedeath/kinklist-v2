@@ -21,6 +21,7 @@ const stripIds = (data: InKinkCategory[], language: 'en' | 'fr' = 'en'): ExKinkC
         name: inCat.name,
         name_fr: inCat.name_fr,
         subcategories: inCat.subcategories.slice(),
+        subcategories_fr: inCat.subcategories_fr?.slice(),
         kinks: inCat.kinks.map((inKink): ExKink => ({
             name: inKink.name,
             name_fr: inKink.name_fr,
@@ -29,6 +30,14 @@ const stripIds = (data: InKinkCategory[], language: 'en' | 'fr' = 'en'): ExKinkC
             comment_fr: inKink.comment_fr,
         })),
     }));
+};
+
+const getDisplayName = (name: string, name_fr?: string, language: 'en' | 'fr' = 'en'): string => {
+    return language === 'fr' && name_fr ? name_fr : name;
+};
+
+const getDisplayComment = (comment?: string, comment_fr?: string, language: 'en' | 'fr' = 'en'): string | undefined => {
+    return language === 'fr' && comment_fr ? comment_fr : comment;
 };
 
 export const generateKinklistImage = (inCategories: InKinkCategory[], ratings: Rating[], username: string, encodeData: boolean, language: 'en' | 'fr' = 'en'): HTMLCanvasElement => {
@@ -64,7 +73,8 @@ const drawAllColumns = (context: CanvasRenderingContext2D, columns: ExKinkCatego
         let yOffset = config.offsetTop;
         for (const cat of column) {
             const catHeight = calculateCategoryHeight(cat);
-            const originalCat = inCategories.find(c => c.name === (language === 'fr' && cat.name ? inCategories.find(ic => ic.name_fr === cat.name)?.name : cat.name));
+            // Find the original category by matching the EN name (cat.name is always EN)
+            const originalCat = inCategories.find(c => c.name === cat.name);
             drawCategory(context, xOffset, yOffset, cat, ratings, includeComments, language, originalCat);
             yOffset += catHeight;
         }
@@ -124,15 +134,15 @@ const drawCategory = (context: CanvasRenderingContext2D, x: number, y: number, c
     // Draw title
     context.fillStyle = '#000000';
     context.font = 'bold 18px Arial';
-    context.fillText(category.name, x, y + 5);
+    context.fillText(getDisplayName(category.name, category.name_fr, language), x, y + 5);
 
     // Optional subcategories
     const hasSubtitle = category.subcategories.length > 1;
     if (hasSubtitle) {
         context.font = 'italic 12px Arial';
         // Display subcategories in the selected language
-        const displaySubcategories = language === 'fr' && originalCat?.subcategories_fr 
-            ? originalCat.subcategories_fr 
+        const displaySubcategories = language === 'fr' && category.subcategories_fr 
+            ? category.subcategories_fr 
             : category.subcategories;
         context.fillText(displaySubcategories.join(', '), x, y + 20);
     }
@@ -145,7 +155,7 @@ const drawCategory = (context: CanvasRenderingContext2D, x: number, y: number, c
         context.fillStyle = '#000000';
         context.font = '12px Arial';
         context.fillText(
-            kink.name,
+            getDisplayName(kink.name, kink.name_fr, language),
             x + 5 + (category.subcategories.length *  20),
             rowY - 6,
         );
@@ -159,30 +169,6 @@ const drawCategory = (context: CanvasRenderingContext2D, x: number, y: number, c
             context.beginPath();
             context.arc(cx, cy, 8, 0, 2 * Math.PI, false);
             context.fillStyle = rating.color;
-            context.fill();
-            context.strokeStyle = `rgba(0, 0, 0, .5)`;
-            context.lineWidth = 1;
-            context.stroke();
-        }
-        // Comment
-        if (includeComments && kink.comment) {
-            const textWidth = context.measureText(kink.name).width;
-            const commentXOffset = x + 20 + (category.subcategories.length *  20) + textWidth;
-            context.beginPath();
-            context.ellipse(commentXOffset, rowY - 10, 6, 5, 0, 0.4 * Math.PI, 0.1 * Math.PI, false);
-            context.lineTo(commentXOffset, rowY - 2);
-            context.lineTo(commentXOffset, rowY - 5);
-            context.fillStyle = '#FFF';
-            context.fill();
-            context.strokeStyle = `rgba(0, 0, 0, .5)`;
-            context.lineWidth = 1;
-            context.stroke();
-            context.beginPath();
-            context.moveTo(commentXOffset - 3, rowY - 11.5);
-            context.lineTo(commentXOffset + 1, rowY - 11.5);
-            context.moveTo(commentXOffset - 3, rowY - 8.5);
-            context.lineTo(commentXOffset + 3, rowY - 8.5);
-            context.fillStyle = '#FFF';
             context.fill();
             context.strokeStyle = `rgba(0, 0, 0, .5)`;
             context.lineWidth = 1;
